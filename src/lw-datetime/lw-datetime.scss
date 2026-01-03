@@ -1,0 +1,47 @@
+.lw-date-time {
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  &__input {
+    padding: 0;
+    text-align: center;
+    border: none;
+    &:focus {
+      outline: none;
+      background-color: #2626fc;
+      color: #fff;
+    }
+    &:hover {
+      outline: none;
+    }
+  }
+  span {
+    margin-bottom: 3px;
+    // display: inline-block;
+    // width: 1ch;
+    // text-align: center;
+    // vertical-align: middle;
+    font-size: 14px;
+    line-height: 14px;
+  }
+
+  &__space-divider {
+    width: 5px;
+  }
+
+  :deep(.el-input.lw-dt-picker__hidden) {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translateX(-50%), translateY(-50%);
+    min-width: 0;
+    min-height: 0;
+    width: 5px !important;
+    height: 50% !important;
+    visibility: hidden !important;
+  }
+
+  &__icon {
+    margin-left: auto;
+  }
+}

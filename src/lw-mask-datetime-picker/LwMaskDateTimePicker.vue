@@ -49,7 +49,7 @@
 
 	interface IProps {
 		modelValue: Date | null;
-		format: string; // формат из props теперь используется везде
+		format: string;
 		width?: number;
 		height?: number;
 		widthUnit?: '%' | 'px';
