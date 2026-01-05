@@ -41,9 +41,17 @@ export const yearsArrowInput = (
   direction: 'up' | 'down'
 ): string => {
   if (direction === 'up') {
-    return (Number(currentValue) + 1).toString();
+    if (Number(currentValue) !== 2050) {
+      return (Number(currentValue) + 1).toString();
+    } else {
+      return '2050';
+    }
   } else {
-    return (Number(currentValue) - 1).toString();
+    if (Number(currentValue) !== 2000) {
+      return (Number(currentValue) - 1).toString();
+    } else {
+      return '2000';
+    }
   }
 };
 

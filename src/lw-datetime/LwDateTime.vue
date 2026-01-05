@@ -17,7 +17,7 @@
       class="lw-date-time__input"
       :style="{ width: String(modelFormatObject!.DD).length + 0.5 + 'ch' }"
       data-input="DD"
-      @focus="inputFocus"
+      @input="handleDaysInput"
       @blur="inputBlur"
     />
     <span
@@ -38,6 +38,7 @@
       class="lw-date-time__input"
       :style="{ width: String(modelFormatObject!.MM).length + 0.5 + 'ch' }"
       data-input="MM"
+      @input="handleMonthInput"
       @blur="inputBlur"
     />
     <span
@@ -58,6 +59,7 @@
       class="lw-date-time__input"
       :style="{ width: String(modelFormatObject!.YYYY).length + 0.5 + 'ch' }"
       data-input="YYYY"
+      @input="handleYearsInput"
       @blur="inputBlur"
     />
     <div
@@ -72,6 +74,7 @@
       class="lw-date-time__input"
       :style="{ width: String(modelFormatObject!.HH).length + 0.5 + 'ch' }"
       data-input="HH"
+      @input="handleHoursInput"
       @blur="inputBlur"
     />
     <span v-if="props.dateType === DateTypeEnum.datetime">:</span>
@@ -83,6 +86,7 @@
       class="lw-date-time__input"
       :style="{ width: String(modelFormatObject!.mm).length + 0.5 + 'ch' }"
       data-input="mm"
+      @input="handleMinutesInput"
       @blur="inputBlur"
     />
     <span v-if="props.dateType === DateTypeEnum.datetime">:</span>
@@ -94,6 +98,7 @@
       class="lw-date-time__input"
       :style="{ width: String(modelFormatObject!.ss).length + 0.5 + 'ch' }"
       data-input="ss"
+      @input="handleSecondsInput"
       @blur="inputBlur"
     />
     <!-- кнопка-иконка пикера -->
@@ -131,6 +136,7 @@ import { getValidModel } from '@/lw-datetime/lw-valid-model';
 interface IProps {
   modelValue: Date;
   dateType: DateTypeEnum;
+  isSecondsZero?: boolean;
   width?: number;
   height?: number;
   widthUnit?: '%' | 'px';
@@ -172,6 +178,15 @@ const focusableElems = [
 
 const focusable = ref<HTMLInputElement[]>([]);
 
+const props = withDefaults(defineProps<IProps>(), {
+  isSecondsZero: true,
+  width: 100,
+  height: 100,
+  widthUnit: '%',
+  heightUnit: '%',
+  bg: '#fff'
+});
+
 watch(
   () => model.value,
   newValue => {
@@ -182,19 +197,13 @@ watch(
       modelFormatObject.value!.YYYY = obj.format('YYYY');
       modelFormatObject.value!.HH = obj.format('HH');
       modelFormatObject.value!.mm = obj.format('mm');
-      modelFormatObject.value!.ss = obj.format('ss');
+      modelFormatObject.value!.ss = props.isSecondsZero
+        ? '00'
+        : obj.format('ss');
     }
   },
   { immediate: true }
 );
-
-const props = withDefaults(defineProps<IProps>(), {
-  width: 100,
-  height: 100,
-  widthUnit: '%',
-  heightUnit: '%',
-  bg: '#fff'
-});
 
 const mainElemClick = (e: MouseEvent) => {
   if (!isListenerExist.value) {
@@ -222,9 +231,127 @@ const mainElemFocus = (e: Event) => {
   }
 };
 
-const inputFocus = (e: FocusEvent) => {};
+let firstInputFlag = false;
+
+const handleDaysInput = (e: Event) => {
+  if (e instanceof InputEvent) {
+    const target = e.target as HTMLInputElement;
+    const char = e.data;
+    if (!firstInputFlag) {
+      modelFormatObject.value!.DD = char!.padStart(2, '0');
+      firstInputFlag = true;
+    } else {
+      modelFormatObject.value!.DD = target.value.substring(1);
+      if (Number(modelFormatObject.value!.DD) > 31) {
+        modelFormatObject.value!.DD = '31';
+      } else if (Number(modelFormatObject.value!.DD) < 1) {
+        modelFormatObject.value!.DD = '01';
+      }
+      inputMonthRef.value!.focus();
+    }
+  }
+};
+
+const handleMonthInput = (e: Event) => {
+  if (e instanceof InputEvent) {
+    const target = e.target as HTMLInputElement;
+    const char = e.data;
+    if (!firstInputFlag) {
+      modelFormatObject.value!.MM = char!.padStart(2, '0');
+      firstInputFlag = true;
+    } else {
+      modelFormatObject.value!.MM = target.value.substring(1);
+      if (Number(modelFormatObject.value!.MM) > 12) {
+        modelFormatObject.value!.MM = '12';
+      } else if (Number(modelFormatObject.value!.DD) < 1) {
+        modelFormatObject.value!.MM = '01';
+      }
+      inputYearsRef.value!.focus();
+    }
+  }
+};
+
+const handleYearsInput = (e: Event) => {
+  if (e instanceof InputEvent) {
+    const target = e.target as HTMLInputElement;
+    const char = e.data;
+    if (!firstInputFlag) {
+      modelFormatObject.value!.YYYY = '200' + char!;
+      target.value = modelFormatObject.value!.YYYY;
+      firstInputFlag = true;
+    } else {
+      modelFormatObject.value!.YYYY =
+        '20' + target.value.substring(3, 4) + char!;
+      target.value = modelFormatObject.value!.YYYY;
+      if (Number(modelFormatObject.value!.YYYY) > 2050) {
+        modelFormatObject.value!.YYYY = '2050';
+      }
+      inputHoursRef.value!.focus();
+    }
+  }
+};
+
+const handleHoursInput = (e: Event) => {
+  if (e instanceof InputEvent) {
+    const target = e.target as HTMLInputElement;
+    const char = e.data;
+
+    if (!firstInputFlag) {
+      modelFormatObject.value!.HH = char!.padStart(2, '0');
+      firstInputFlag = true;
+    } else {
+      modelFormatObject.value!.HH = target.value.substring(1);
+      if (Number(modelFormatObject.value!.HH) > 23) {
+        modelFormatObject.value!.HH = '00';
+      } else if (Number(modelFormatObject.value!.HH) < 0) {
+        modelFormatObject.value!.HH = '00';
+      }
+      inputMinutesRef.value!.focus();
+    }
+  }
+};
+
+const handleMinutesInput = (e: Event) => {
+  if (e instanceof InputEvent) {
+    const target = e.target as HTMLInputElement;
+    const char = e.data;
+
+    if (!firstInputFlag) {
+      modelFormatObject.value!.mm = char!.padStart(2, '0');
+      firstInputFlag = true;
+    } else {
+      modelFormatObject.value!.mm = target.value.substring(1);
+      if (Number(modelFormatObject.value!.mm) > 59) {
+        modelFormatObject.value!.mm = '59';
+      } else if (Number(modelFormatObject.value!.mm) < 0) {
+        modelFormatObject.value!.mm = '00';
+      }
+      inputSecondsRef.value!.focus();
+    }
+  }
+};
+
+const handleSecondsInput = (e: Event) => {
+  if (e instanceof InputEvent) {
+    const target = e.target as HTMLInputElement;
+    const char = e.data;
+    if (!firstInputFlag) {
+      modelFormatObject.value!.ss = char!.padStart(2, '0');
+      firstInputFlag = true;
+    } else {
+      modelFormatObject.value!.ss = target.value.substring(1);
+      if (Number(modelFormatObject.value!.ss) > 59) {
+        modelFormatObject.value!.ss = '59';
+      } else if (Number(modelFormatObject.value!.ss) < 0) {
+        modelFormatObject.value!.ss = '00';
+      }
+      inputSecondsRef.value!.blur();
+    }
+  }
+};
 
 const inputBlur = (e: FocusEvent) => {
+  firstInputFlag = false;
   if (isListenerExist.value && e.relatedTarget === mainElemRef.value) {
     (e.target as HTMLInputElement).focus();
     return;
@@ -249,6 +376,29 @@ const handleKeydown = (e: KeyboardEvent) => {
   if (currentIndex === -1) return;
   let nextIndex = -1;
 
+  const allowedKeys = [
+    '0',
+    '1',
+    '2',
+    '3',
+    '4',
+    '5',
+    '6',
+    '7',
+    '8',
+    '9',
+    'Tab',
+    'Enter',
+    'ArrowLeft',
+    'ArrowRight',
+    'ArrowUp',
+    'ArrowDown'
+  ];
+
+  if (!allowedKeys.includes(e.key)) {
+    e.preventDefault();
+  }
+
   switch (e.key) {
     case 'ArrowRight':
       e.preventDefault();
@@ -265,6 +415,9 @@ const handleKeydown = (e: KeyboardEvent) => {
       break;
     case 'ArrowDown':
       setNewValueByArrows(focusable.value[currentIndex]!, 'down');
+      break;
+    case 'Enter':
+      focusable.value[currentIndex]!.blur();
       break;
     default:
       return;
@@ -285,8 +438,6 @@ const setNewValueByArrows = (
   input.value = newValue;
   modelFormatObject.value[subj] = newValue;
 };
-
-const setNewValueByNums = () => {};
 
 const newValidValue = (
   subj: inputSubjType,
