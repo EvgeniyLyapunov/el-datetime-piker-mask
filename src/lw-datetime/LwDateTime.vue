@@ -59,6 +59,7 @@
       class="lw-date-time__input"
       :style="{ width: String(modelFormatObject!.YYYY).length + 0.5 + 'ch' }"
       data-input="YYYY"
+      @beforeinput="handleBeforeYearInput"
       @input="handleYearsInput"
       @blur="inputBlur"
     />
@@ -271,22 +272,45 @@ const handleMonthInput = (e: Event) => {
   }
 };
 
+let yearInputChar: number = 1;
+let yearStartValue: string = '';
+
+const handleBeforeYearInput = (e: InputEvent) => {
+  if (yearInputChar === 1) {
+    yearStartValue = (e.target as HTMLInputElement).value;
+  }
+}
+
 const handleYearsInput = (e: Event) => {
   if (e instanceof InputEvent) {
     const target = e.target as HTMLInputElement;
     const char = e.data;
-    if (!firstInputFlag) {
-      modelFormatObject.value!.YYYY = '200' + char!;
-      target.value = modelFormatObject.value!.YYYY;
-      firstInputFlag = true;
-    } else {
-      modelFormatObject.value!.YYYY =
-        '20' + target.value.substring(3, 4) + char!;
-      target.value = modelFormatObject.value!.YYYY;
-      if (Number(modelFormatObject.value!.YYYY) > 2050) {
-        modelFormatObject.value!.YYYY = '2050';
-      }
-      inputHoursRef.value!.focus();
+    switch (yearInputChar) {
+      case 1:
+        console.log(yearStartValue);
+        modelFormatObject.value!.YYYY = '000' + char!;
+        yearInputChar++;
+        break;
+      case 2:
+        modelFormatObject.value!.YYYY =
+        '00' + target.value.substring(3, 4) + char!;
+        yearInputChar++;
+        break;
+      case 3:
+        modelFormatObject.value!.YYYY =
+        '0' + target.value.substring(2, 4) + char!;
+        yearInputChar++;
+        break;
+      case 4:
+        modelFormatObject.value!.YYYY =
+        target.value.substring(1, 4) + char!;
+        if (Number(modelFormatObject.value!.YYYY) > 2200) {
+          modelFormatObject.value!.YYYY = '2200';
+        }
+        yearInputChar = 1;
+        yearStartValue = '';
+        inputHoursRef.value!.focus();
+        break;
     }
   }
 };
@@ -345,7 +369,7 @@ const handleSecondsInput = (e: Event) => {
       } else if (Number(modelFormatObject.value!.ss) < 0) {
         modelFormatObject.value!.ss = '00';
       }
-      inputSecondsRef.value!.blur();
+      // inputSecondsRef.value!.blur();
     }
   }
 };
@@ -356,6 +380,11 @@ const inputBlur = (e: FocusEvent) => {
     (e.target as HTMLInputElement).focus();
     return;
   }
+  if ((e.target as HTMLElement).dataset.input === "YYYY" && yearInputChar !== 1) {
+        modelFormatObject.value!.YYYY = yearStartValue;
+        yearInputChar = 1;
+        yearStartValue = '';
+      }
   if (!mainElemRef.value?.contains(e.relatedTarget)) {
     if (isListenerExist.value) {
       model.value = getValidModel(modelFormatObject.value);
